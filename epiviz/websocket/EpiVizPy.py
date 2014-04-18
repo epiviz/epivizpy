@@ -41,5 +41,3 @@ class EpiVizPy(object):
         self._server = tornado.httpserver.HTTPServer(self._application)
         self._server.listen(port)
         tornado.ioloop.IOLoop.instance().start()
-
-

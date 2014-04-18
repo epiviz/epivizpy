@@ -24,12 +24,14 @@ class Request(object):
         # UI actions
         ADD_MEASUREMENTS = 'addMeasurements'
         REMOVE_MEASUREMENTS = 'removeMeasurements'
-        ADD_SEQNAMES = 'addSeqNames'
+        ADD_SEQINFOS = 'addSeqInfos'
         REMOVE_SEQNAMES = 'removeSeqNames'
         ADD_CHART = 'addChart'
         REMOVE_CHART = 'removeChart'
-        CLEAR_MEASUREMENT_CACHE = 'clearMeasurementCache'
+        CLEAR_DATASOURCE_GROUP_CACHE = 'clearDatasourceGroupCache'
+        FLUSH_CACHE = 'flushCache'
         NAVIGATE = 'navigate'
+
 
 
     def __init__(self, request_id, args):
