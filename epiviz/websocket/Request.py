@@ -32,6 +32,7 @@ class Request(object):
         CLEAR_DATASOURCE_GROUP_CACHE = 'clearDatasourceGroupCache'
         FLUSH_CACHE = 'flushCache'
         NAVIGATE = 'navigate'
+        REDRAW = 'redraw'
 
     next_id = 0
 
@@ -62,20 +63,31 @@ class Request(object):
 
     @staticmethod
     def add_measurements(measurements):
-        return Request(Request.generate_id(), {'action': 'addMeasurements', 'measurements': simplejson.dumps(measurements)})
+        return Request(Request.generate_id(), {'action': Request.Action.ADD_MEASUREMENTS, 'measurements': simplejson.dumps(measurements)})
 
     @staticmethod
     def remove_measurements(measurements):
-        return Request(Request.generate_id(), {'action': 'removeMeasurements', 'measurements': simplejson.dumps(measurements)})
+        return Request(Request.generate_id(), {'action': Request.Action.REMOVE_MEASUREMENTS, 'measurements': simplejson.dumps(measurements)})
 
     @staticmethod
     def add_chart(chart_type, measurements):
-        return Request(Request.generate_id(), {'action': 'addChart', 'type': chart_type, 'measurements': simplejson.dumps(measurements)})
+        return Request(Request.generate_id(), {'action': Request.Action.ADD_CHART, 'type': chart_type, 'measurements': simplejson.dumps(measurements)})
 
     @staticmethod
     def remove_chart(chart_id):
-        return Request(Request.generate_id(), {'action': 'removeChart', 'chartId': chart_id})
+        return Request(Request.generate_id(), {'action': Request.Action.REMOVE_CHART, 'chartId': chart_id})
 
+    @staticmethod
+    def redraw():
+        return Request(Request.generate_id(), {'action': Request.Action.REDRAW})
+
+    @staticmethod
+    def flush_cache():
+        return Request(Request.generate_id(), {'action': Request.Action.FLUSH_CACHE})
+
+    @staticmethod
+    def clear_datasource_group_cache(datasource_group):
+        return Request(Request.generate_id(), {'action': Request.Action.CLEAR_DATASOURCE_GROUP_CACHE, 'datasourceGroup': datasource_group})
 
     def to_json(self):
         raw = {'requestId': self._id, 'type': 'request', 'data': self._args}

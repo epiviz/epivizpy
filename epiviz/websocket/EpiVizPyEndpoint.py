@@ -210,7 +210,8 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
             Request.Action.REMOVE_CHART: lambda: self._remove_chart(),
             Request.Action.CLEAR_DATASOURCE_GROUP_CACHE: lambda: self._clear_datasource_group_cache(),
             Request.Action.FLUSH_CACHE: lambda: self._flush_cache(),
-            Request.Action.NAVIGATE: lambda: self._navigate()
+            Request.Action.NAVIGATE: lambda: self._navigate(),
+            Request.Action.REDRAW: lambda: self._redraw()
         }[command]()
 
         if request is None:
@@ -278,6 +279,15 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
 
         chart_id = self._charts.pop()
         return Request.remove_chart(chart_id)
+
+    def _redraw(self):
+        return Request.redraw()
+
+    def _flush_cache(self):
+        return Request.flush_cache()
+
+    def _clear_datasource_group_cache(self):
+        return Request.clear_datasource_group_cache('py_datasourcegroup')
 
     def _random_str(self, size):
         chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
