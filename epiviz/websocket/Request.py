@@ -33,6 +33,7 @@ class Request(object):
         FLUSH_CACHE = 'flushCache'
         NAVIGATE = 'navigate'
         REDRAW = 'redraw'
+        GET_CURRENT_LOCATION = 'getCurrentLocation'
 
     next_id = 0
 
@@ -88,6 +89,14 @@ class Request(object):
     @staticmethod
     def clear_datasource_group_cache(datasource_group):
         return Request(Request.generate_id(), {'action': Request.Action.CLEAR_DATASOURCE_GROUP_CACHE, 'datasourceGroup': datasource_group})
+
+    @staticmethod
+    def get_current_location():
+        return Request(Request.generate_id(), {'action': Request.Action.GET_CURRENT_LOCATION})
+
+    @staticmethod
+    def navigate(location):
+        return Request(Request.generate_id(), {'action': Request.Action.NAVIGATE, 'range': simplejson.dumps(location)})
 
     def to_json(self):
         raw = {'requestId': self._id, 'type': 'request', 'data': self._args}

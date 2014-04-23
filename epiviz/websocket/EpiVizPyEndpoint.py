@@ -31,6 +31,7 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         self._callback_map = {}
 
         self._charts = []
+        self._current_location = None
 
         super(EpiVizPyEndpoint, self).__init__(*args, **kwargs)
 
@@ -47,7 +48,9 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
 
         if message['type'] == 'response':
             if message['requestId'] in self._callback_map:
-                self._callback_map[message['requestId']](message['data'])
+                callback = self._callback_map[message['requestId']]
+                self._callback_map.pop(message['requestId'])
+                callback(message['data'])
 
     def on_close(self):
         if not self._console_listener is None:
@@ -211,7 +214,8 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
             Request.Action.CLEAR_DATASOURCE_GROUP_CACHE: lambda: self._clear_datasource_group_cache(),
             Request.Action.FLUSH_CACHE: lambda: self._flush_cache(),
             Request.Action.NAVIGATE: lambda: self._navigate(),
-            Request.Action.REDRAW: lambda: self._redraw()
+            Request.Action.REDRAW: lambda: self._redraw(),
+            Request.Action.GET_CURRENT_LOCATION: lambda: self._get_current_location()
         }[command]()
 
         if request is None:
@@ -288,6 +292,32 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
 
     def _clear_datasource_group_cache(self):
         return Request.clear_datasource_group_cache('py_datasourcegroup')
+
+    def _get_current_location(self):
+        request = Request.get_current_location()
+        self._callback_map[request.id()] = lambda data: self._current_location_retrieved(data)
+
+        return request
+
+    def _current_location_retrieved(self, data):
+        if not data['success']:
+            print '**Current location retrieval failed: %s**' % data['errorMessage']
+            return
+
+        self._current_location = data['value']
+        print 'Current location: %s:%s-%s' % (data['value']['seqName'], data['value']['start'], data['value']['end'])
+
+    def _navigate(self):
+        if self._current_location is None:
+            return None
+
+        width = self._current_location['end'] - self._current_location['start']
+        start = self._current_location['start'] + width * 0.2
+        end = start + width
+
+        self._current_location = { 'seqName': self._current_location['seqName'], 'start': start, 'end': end }
+
+        return Request.navigate(self._current_location)
 
     def _random_str(self, size):
         chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
