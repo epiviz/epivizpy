@@ -13,7 +13,7 @@ Running the Demo
 
 Launch ```main.py```
 
-Open Epiviz to visualize the data: [http://epiviz.cbcb.umd.edu/?websocket-host[]=ws://localhost:8888/ws&settings=default&seqName=1&start=1&end=2305&](http://epiviz.cbcb.umd.edu/?websocket-host[]=ws://localhost:8888/ws&settings=default&seqName=1&start=1&end=2305&)
+Open Epiviz to visualize the data: [http://epiviz.cbcb.umd.edu/?websocket-host[]=ws://localhost:8888/ws&settings=default&](http://epiviz.cbcb.umd.edu/?websocket-host[]=ws://localhost:8888/ws&settings=default&)
 
 Type the following commands in the command line to see the demo at work:
 
