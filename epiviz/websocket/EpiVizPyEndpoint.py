@@ -256,6 +256,9 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
 
         return Request.remove_measurements([m])
 
+    def _add_seqinfos(self):
+        return None
+
     def _add_chart(self):
         if len(self._measurements) == 0:
             return None
