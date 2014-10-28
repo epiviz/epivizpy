@@ -4,7 +4,7 @@ EpivizPy
 The repository contains base code for Python integration with the Epiviz tool. 
 It also contains a demo that exemplifies usage and potential extension. 
 
-** A different demo with real world data can be found in the ```demo``` branch **
+**A different demo with real world data can be found in the ```demo``` branch**
 
 Running the Demo
 -----
