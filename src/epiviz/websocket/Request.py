@@ -79,6 +79,10 @@ class Request(object):
         return Request(Request.generate_id(), {'action': Request.Action.REMOVE_CHART, 'chartId': chart_id})
 
     @staticmethod
+    def add_seqinfos(seq_infos):
+        return Request(Request.generate_id(), { 'action': Request.Action.ADD_SEQINFOS, 'seqInfos': simplejson.dumps(seq_infos)})
+
+    @staticmethod
     def redraw():
         return Request(Request.generate_id(), {'action': Request.Action.REDRAW})
 

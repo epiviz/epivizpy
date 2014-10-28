@@ -4,7 +4,6 @@ Created on Mar 12, 2014
 @author: florin
 '''
 
-import math
 import random
 
 import simplejson
@@ -19,12 +18,11 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
 
     def __init__(self, *args, **kwargs):
         self._console_listener = kwargs.pop('console_listener')
+        self._datastore = kwargs.pop('datastore')
         self._measurements = kwargs.pop('measurements')
         self._measurements_lock = kwargs.pop('measurements_lock')
-
         self._event_listener = EventListener(lambda command: self._handle_command(command))
         if not self._console_listener is None:
-
             self._console_listener.on_command_received().add_listener(self._event_listener)
 
         # Used to keep track of callbacks for responses
@@ -32,6 +30,8 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
 
         self._charts = []
         self._current_location = None
+
+        self._datastore.on_data_added().add_listener(EventListener(lambda data_tuple: self._data_added(data_tuple)))
 
         super(EpiVizPyEndpoint, self).__init__(*args, **kwargs)
 
@@ -60,6 +60,7 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
 
     def send_request(self, request):
         '''
+
         :param request: Request
         '''
 
@@ -69,15 +70,16 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         # switch(action)
         response = {
             Request.Action.GET_MEASUREMENTS: lambda: self._get_measurements(request.id()),
-            Request.Action.GET_ROWS: lambda: self._get_rows(request.id(), request.get('datasource'), request.get('chr'), request.get('start'), request.get('end'), request.get('metadata')),
-            Request.Action.GET_VALUES: lambda: self._get_values(request.id(), request.get('measurement'), request.get('datasource'), request.get('chr'), request.get('start'), request.get('end')),
+            Request.Action.GET_ROWS: lambda: self._get_rows(request.id(), request.get('datasource'), request.get('seqName'), request.get('start'), request.get('end'), request.get('metadata')),
+            Request.Action.GET_VALUES: lambda: self._get_values(request.id(), request.get('measurement'), request.get('datasource'), request.get('seqName'), request.get('start'), request.get('end')),
             Request.Action.GET_SEQINFOS: lambda: self._get_seqinfos(request.id()),
             Request.Action.SEARCH: lambda: self._search(request.id(), request.get('q'), request.get('maxResults'))
         }[action]()
 
-
         message = response.to_json()
         self.write_message(message)
+
+        print 'response: %s' % message
 
     # Request handlers
 
@@ -85,15 +87,7 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         '''
         Returns Response
         '''
-        self._measurements_lock.acquire()
-        data = {'id': [], 'name': [], 'type': [], 'datasourceId': [], 'datasourceGroup': [],
-                'defaultChartType': [], 'annotation': [], 'minValue': [], 'maxValue': [], 'metadata': [] }
-        for i in range(len(self._measurements)):
-            for key, value in self._measurements[i].iteritems():
-                data[key].append(value)
-        self._measurements_lock.release()
-
-        return Response(request_id, data)
+        return Response(request_id, self._datastore.measurements())
 
     def _get_rows(self, request_id, datasource, seq_name, start, end, metadata):
         '''
@@ -104,47 +98,7 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         :param metadata: string[] A list of column names for which to retrieve the values
         Returns response
         '''
-        # Return a genomic range of 100 base pairs every 1000 base pairs
-        step, width = 1000, 100
-
-        globalStartIndex = math.floor((start - 1) / step) + 1
-        firstStart = globalStartIndex * step + 1
-        firstEnd = firstStart + width
-
-        if firstEnd < start:
-            firstStart += step
-            firstEnd += step
-
-        if firstStart >= end:
-            # Nothing to return
-            return Response(request_id, {
-              'values': { 'id': [], 'start': [], 'end': [], 'strand': [], 'metadata': { 'py_metadata': [] } },
-              'globalStartIndex': None,
-              'useOffset': False
-            })
-
-        ids = []
-        starts = []
-        ends = []
-        strands = '*'
-        py_metadata = []
-
-        globalIndex = globalStartIndex
-        s = firstStart
-
-        while s < end:
-            ids.append(globalIndex)
-            starts.append(s)
-            ends.append(s + width)
-            py_metadata.append(self._random_str(5))  # Random string
-            globalIndex += 1
-            s += step
-
-        return Response(request_id, {
-          'values': { 'id': ids, 'start': starts, 'end': ends, 'strand': strands, 'metadata':{ 'py_metadata': py_metadata } },
-          'globalStartIndex': globalStartIndex,
-          'useOffset': False
-        })
+        return Response(request_id, self._datastore.rows(datasource, seq_name, start, end, metadata))
 
     def _get_values(self, request_id, measurement, datasource, seq_name, start, end):
         '''
@@ -155,43 +109,14 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         :param end: number
         Returns response
         '''
-        # Return a genomic range of 100 base pairs every 1000 base pairs
-        step, width = 1000, 100
-
-        globalStartIndex = math.floor((start - 1) / step) + 1
-        firstStart = globalStartIndex * step + 1
-        firstEnd = firstStart + width
-
-        if firstEnd < start:
-            firstStart += step
-            firstEnd += step
-
-        if firstStart >= end:
-            # Nothing to return
-            return Response(request_id, {
-              'values': [],
-              'globalStartIndex': None,
-            })
-
-        values = []
-        globalIndex = globalStartIndex
-        s = firstStart
-        while s < end:
-            v = random.random() * 30 - 5
-            values.append(v)
-            globalIndex += 1
-            s += step
-
-        return Response(request_id, {
-          'values': values,
-          'globalStartIndex': globalStartIndex
-        })
+        return Response(request_id, self._datastore.values(measurement, datasource, seq_name, start, end))
 
     def _get_seqinfos(self, request_id):
         '''
         Returns response
+        TODO: Come back here!
         '''
-        return Response(request_id, [['chr1', 1, 248956422], ['pyChr', 1, 1000000000]])
+        return Response(request_id, self._datastore.seq_infos())
 
     def _search(self, request_id, query, max_results):
         '''
@@ -201,10 +126,9 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         '''
         return Response(request_id, [])
 
-
     def _handle_command(self, command):
         # switch(action)
-        request = {
+        command_handlers = {
             Request.Action.ADD_MEASUREMENTS: lambda: self._add_measurements(),
             Request.Action.REMOVE_MEASUREMENTS: lambda: self._remove_measurements(),
             Request.Action.ADD_SEQINFOS: lambda: self._add_seqinfos(),
@@ -216,7 +140,12 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
             Request.Action.NAVIGATE: lambda: self._navigate(),
             Request.Action.REDRAW: lambda: self._redraw(),
             Request.Action.GET_CURRENT_LOCATION: lambda: self._get_current_location()
-        }[command]()
+        }
+
+        if command not in command_handlers:
+            return
+
+        request = command_handlers[command]()
 
         if request is None:
             print '**unable to make request**'
@@ -226,48 +155,13 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         self.write_message(message)
 
     def _add_measurements(self):
-        mid = self._random_str(5)
-        m = {
-          'id': 'python_ms_%s' % mid,
-          'name': 'Python Measurement %s' % mid,
-          'type': 'feature',
-          'datasourceId': 'py_datasource',
-          'datasourceGroup': 'py_datasourcegroup',
-          'defaultChartType': 'Line Track',
-          'annotation': None,
-          'minValue':-5,
-          'maxValue': 25,
-          'metadata': ['py_metadata']
-        }
-
-        self._measurements_lock.acquire()
-        self._measurements.append(m)
-        self._measurements_lock.release()
-
-        return Request.add_measurements([m])
+        return None
 
     def _remove_measurements(self):
-        if len(self._measurements) == 0:
-            return None
-
-        self._measurements_lock.acquire()
-        m = self._measurements.pop()
-        self._measurements_lock.release()
-
-        return Request.remove_measurements([m])
+        return None
 
     def _add_chart(self):
-        if len(self._measurements) == 0:
-            return None
-
-        ms = [self._measurements[0]]
-        if (len(self._measurements) > 1):
-            ms.append(self._measurements[1])
-
-        request = Request.add_chart('epiviz.plugins.charts.LineTrack', ms)
-        self._callback_map[request.id()] = lambda data: self._chart_added(data)
-
-        return request
+        return None
 
     def _chart_added(self, data):
         if not data['success']:
@@ -278,11 +172,7 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         print 'Added chart successfully: %s' % data['value']['id']
 
     def _remove_chart(self):
-        if len(self._charts) == 0:
-            return None
-
-        chart_id = self._charts.pop()
-        return Request.remove_chart(chart_id)
+        return None
 
     def _redraw(self):
         return Request.redraw()
@@ -291,7 +181,7 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         return Request.flush_cache()
 
     def _clear_datasource_group_cache(self):
-        return Request.clear_datasource_group_cache('py_datasourcegroup')
+        return None
 
     def _get_current_location(self):
         request = Request.get_current_location()
@@ -308,16 +198,7 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
         print 'Current location: %s:%s-%s' % (data['value']['seqName'], data['value']['start'], data['value']['end'])
 
     def _navigate(self):
-        if self._current_location is None:
-            return None
-
-        width = self._current_location['end'] - self._current_location['start']
-        start = self._current_location['start'] + width * 0.2
-        end = start + width
-
-        self._current_location = { 'seqName': self._current_location['seqName'], 'start': start, 'end': end }
-
-        return Request.navigate(self._current_location)
+        return None
 
     def _random_str(self, size):
         chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -327,4 +208,33 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
             result += chars[random.randint(0, len(chars) - 1)]
 
         return result
+
+    def _data_added(self, data_tuple):
+        '''
+        :param data_tuple:
+        '''
+        ms = []
+        for i in range(len(data_tuple['measurements'])):
+            m = {
+              'id': data_tuple['measurements'][i],
+              'name': data_tuple['names'][i],
+              'type': 'feature',
+              'datasourceId': data_tuple['datasource_id'],
+              'datasourceGroup': data_tuple['datasource_group'],
+              'defaultChartType': 'any',
+              'annotation': None,
+              'minValue': data_tuple['minVals'][i],
+              'maxValue': data_tuple['maxVals'][i],
+              'metadata': data_tuple['metadata']
+            }
+            ms.append(m)
+        request = Request.add_measurements(ms)
+        message = request.to_json()
+        self.write_message(message)
+
+        request = Request.add_seqinfos(data_tuple['seqInfos'])
+        message = request.to_json()
+        self.write_message(message)
+
+
 
