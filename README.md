@@ -4,20 +4,16 @@ EpivizPy
 The repository contains base code for Python integration with the Epiviz tool. 
 It also contains a demo that exemplifies usage and potential extension. 
 
-To run the Demo
+Running the Demo
 -----
 
 (Optional) Open project using Eclipse PyDev
 
-Launch src/main.py
+Launch ```src/main.py```
 
-Use the following commands in the command line to see the demo at work:
+Type the following commands in the command line to see the demo at work:
 
-**To load demo data** (influenza read coverage, from the *influenza-A.sam* file included): 
-
-```
-addData
-```
+**To load demo data** (influenza read coverage, from the *influenza-A.sam* file included): type ```addData```
 
 This will output something like:
 
@@ -88,3 +84,9 @@ user input: "addData"
 
 [217 rows x 4 columns]
 </code></pre>
+
+Open Epiviz to visualize the data: [http://epiviz.cbcb.umd.edu/?websocket-host[]=ws://localhost:8888/ws&settings=default&seqName=1&start=1&end=2305&](http://epiviz.cbcb.umd.edu/?websocket-host[]=ws://localhost:8888/ws&settings=default&seqName=1&start=1&end=2305&)
+
+Add a new *Line Track* to the workspace; search for the measurement called ```Influenza read coverage```.
+
+A new track will be displayed, containing the read coverage information read from Epivizpy.
