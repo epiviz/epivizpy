@@ -35,6 +35,9 @@ class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
 
         super(EpiVizPyEndpoint, self).__init__(*args, **kwargs)
 
+    def check_origin(self, origin):
+        return True
+
     def open(self):
         print 'new connection'
 
