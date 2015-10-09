@@ -11,7 +11,7 @@ Running the Demo
 
 (Optional) Open project using Eclipse PyDev
 
-# Dependencies:
+## Dependencies:
 
 * *Python 2.7*
 * `pip install simplejson`
