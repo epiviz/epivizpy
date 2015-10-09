@@ -11,6 +11,14 @@ Running the Demo
 
 (Optional) Open project using Eclipse PyDev
 
+# Dependencies:
+
+* *Python 2.7*
+* `pip install simplejson`
+* `pip install tornado`
+* `pip install enum`
+* (For the `demo` branch: `pip install pandas`)
+
 Launch ```main.py```
 
 Open Epiviz to visualize the data: [http://epiviz.cbcb.umd.edu/?websocket-host[]=ws://localhost:8888/ws&settings=default&](http://epiviz.cbcb.umd.edu/?websocket-host[]=ws://localhost:8888/ws&settings=default&)
