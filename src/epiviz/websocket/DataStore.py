@@ -157,7 +157,8 @@ class DataStore(object):
         if metadata:
             metadata_values = {}
             for col in metadata:
-                metadata_values[col] = []
+                if col is not None:
+                    metadata_values[col] = []
         empty = {
           'globalStartIndex': None,
           'values': {
@@ -185,7 +186,8 @@ class DataStore(object):
         if metadata:
             metadata_values = {}
             for col in metadata:
-                metadata_values[col] = rows[col].values.tolist()
+                if col is not None:
+                    metadata_values[col] = rows[col].values.tolist()
 
         return {
             'globalStartIndex': min_index,
