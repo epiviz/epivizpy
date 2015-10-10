@@ -11,9 +11,9 @@ Running the Demo
 
 (Optional) Open project using Eclipse PyDev
 
-## Dependencies:
+### Dependencies:
 
-* *Python 2.7*
+* **Python 2.7**
 * `pip install simplejson`
 * `pip install tornado`
 * `pip install enum`
@@ -41,4 +41,21 @@ that measurement.
 ```navigate``` can only be called after calling ```getCurrentLocation```. Causes Epiviz to navigate right.
 
 ```redraw``` causes Epiviz to redraw all charts.
+
+# Known issues
+
+On Windows, when running `pip install pandas`, you get the following error:
+
+```
+Command "C:\Python27\python.exe -c "import setuptools, tokenize;_file__='c:\\users\\mms\\appdata\\local\\temp\\pip-build-v8ycdd\\numpy\\setup.py';exec(compile(getattr(tokenize, 'open', open)(__file_).read().replace('\r\n', '\n'), _file_, 'exec'))" install --record c:\users\mms\appdata\local\temp\pip-n35ir4-record\install-record.txt --single-version-externally-managed --compile" failed with error code 1 in c:\users\mms\appdata\local\temp\pip-build-v8ycdd\numpy
+```
+
+This is a known problem with Python in Windows. The solution, as outlined in [this post](http://shop.wickeddevice.com/2013/12/11/windows-7-python-virtualenv-and-the-unable-to-find-vcvarsall-bat-error/) is:
+
+1. 	Make sure you are running **Python 2.7 (32 Bit version)**
+2. 	Install visual c++ 2008: http://go.microsoft.com/?linkid=7729279 (pip needs the C++ compiler from this version of Visual Studio; **newer versions will not work!**
+3. 	Now for the even more annoying part: open `regedit` (Windows Start button > type `regedit` <enter>); find the following key path: `HKEY_LOCAL_MACHINE\Software\Wow6432Node\Microsoft\VisualStudio\9.0\Setup\VC` (on a 64 bit Windows). If any of those keys does not exist, create them. 
+4. 	Right-click on the `VC` key, and select `New > String value`. The name should be `ProductDir`, and the value, the directory location of `vcvarsall.bat` (for example: `c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\`).
+5. 	Open command prompt **with administrator privileges**, go to `c:\Python27\Scripts` (or your corresponding location of the Python 2.7 installation), and run `pip install pandas` again. This may take a long time but should not fail this time.
+ 	
 
