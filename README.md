@@ -42,7 +42,7 @@ that measurement.
 
 ```redraw``` causes Epiviz to redraw all charts.
 
-# Known issues
+## Known issues
 
 On Windows, when running `pip install pandas`, you get the following error:
 
